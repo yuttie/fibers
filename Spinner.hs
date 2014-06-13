@@ -1,8 +1,13 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Spinner where
 
-import           Control.Applicative ((<$>))
-import           Data.Text           (Text)
-import qualified Data.Text.IO        as T
+import           Control.Applicative        ((<$>), (<*>))
+import           Data.Aeson                 (FromJSON (..), ToJSON (..), encode,
+                                             object, (.:), (.=))
+import qualified Data.Aeson.Types           as Aeson
+import qualified Data.ByteString.Lazy.Char8 as BS
+import           Data.Text                  (Text)
+import qualified Data.Text.IO               as T
 import           System.IO
 
 
@@ -10,6 +15,21 @@ type Key = Text
 type Value = Text
 data Fiber = Exist !Key !Value
 type SourceID = Text
+
+instance FromJSON Fiber where
+    parseJSON (Aeson.Object v) = do
+        typ <- v .: "type" :: Aeson.Parser Text
+        case typ of
+            "exist" -> Exist <$>
+                       v .: ("key"::Text) <*>
+                       v .: ("value"::Text)
+            _ -> fail "parseJSON: unknown type"
+    parseJSON _ = fail "parseJSON: failed to parse Fiber JSON"
+
+instance ToJSON Fiber where
+    toJSON (Exist key value) = object [ "type" .= ("exist" :: Text)
+                                      , "key" .= key
+                                      , "value" .= value ]
 
 data Source = Init Source SourceID
             | HaveOutput Source Fiber
@@ -39,10 +59,9 @@ combine (HaveOutput s fib) s' = HaveOutput (s `combine` s') fib
 sinkHandle :: Handle -> Sink
 sinkHandle h = self
   where
-    self = NeedInput $ \fib -> case fib of
-        Exist k v -> do
-            T.hPutStr h k >> hPutChar h '\t' >> T.hPutStrLn h v
-            return self
+    self = NeedInput $ \fib -> do
+        BS.hPutStrLn h $ encode $ toJSON fib
+        return self
 
 spin :: Source -> Sink -> IO ()
 spin = go []
