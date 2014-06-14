@@ -7,6 +7,7 @@ import           Data.Aeson                 (FromJSON (..), ToJSON (..), encode,
 import qualified Data.Aeson.Types           as Aeson
 import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Text                  (Text)
+import qualified Data.Text                  as T
 import qualified Data.Text.IO               as T
 import           System.IO
 
@@ -31,16 +32,16 @@ instance ToJSON Fiber where
                                       , "key" .= key
                                       , "value" .= value ]
 
-data Source = Init Source SourceID
+data Source = Init Source Source SourceID
             | HaveOutput Source Fiber
             | NeedIO (IO Source)
             | Finishing Source SourceID
             | Done
 
 session :: SourceID -> Source -> Source
-session sid src = Init src sid `combine` Finishing Done sid
+session sid src = Init src Done sid `combine` Finishing Done sid
 
-ini :: Source -> SourceID -> Source
+ini :: Source -> Source -> SourceID -> Source
 ini = Init
 
 fin :: SourceID -> Source
@@ -50,7 +51,7 @@ data Sink = NeedInput (Fiber -> IO Sink)
           | Closed
 
 combine :: Source -> Source -> Source
-combine (Init s sid) s' = Init (s `combine` s') sid
+combine (Init s1 s2 sid) s' = Init (s1 `combine` s') (s2 `combine` s') sid
 combine (Finishing s sid) s' = Finishing (s `combine` s') sid
 combine Done s' = s'
 combine (NeedIO a) s' = NeedIO $ (`combine` s') <$> a
@@ -63,10 +64,26 @@ sinkHandle h = self
         BS.hPutStrLn h $ encode $ toJSON fib
         return self
 
+dedup :: Source -> Source
+dedup = go
+  where
+    go (Init s1 s2 sid) = NeedIO $ do
+        ls <- T.lines <$> T.readFile "known_sources.list"
+        return $ if sid `elem` ls
+            then go s2
+            else Init (go s1) (error "impossible case") sid
+    go (HaveOutput src o) = HaveOutput (go src) o
+    go (NeedIO a) = NeedIO $ go <$> a
+    go (Finishing src sid) = NeedIO $ do
+        withFile "known_sources.list" AppendMode $ \h ->
+            T.hPutStrLn h sid
+        return $ Finishing (go src) sid
+    go Done = Done
+
 spin :: Source -> Sink -> IO ()
 spin = go []
   where
-    go stk (Init s sid) sink = do
+    go stk (Init s _ sid) sink = do
         hPutStr stderr "begin \"" >> T.hPutStr stderr sid >> hPutStrLn stderr "\""
         go (sid : stk) s sink
     go [] (Finishing _ _) _ = fail "nothing to pop"
