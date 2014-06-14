@@ -1,17 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import           Control.Applicative ((<$>))
-import qualified Data.Text           as T
-import qualified Data.Text.IO        as T
+import           Control.Applicative    ((<$>))
+import           Control.Monad.IO.Class (MonadIO (..), liftIO)
+import qualified Data.Text              as T
+import qualified Data.Text.IO           as T
 import           System.IO
 
 import           Spinner
 
 
-sourceFile :: FilePath -> Source
+sourceFile :: MonadIO m => FilePath -> Source m
 sourceFile fp = NeedIO $ do
-    ls <- T.lines <$> T.readFile fp
+    ls <- liftIO $ T.lines <$> T.readFile fp
     let sid = T.pack fp
     let src = foldr (\l next -> HaveOutput next $ Exist l "1") (fin sid) ls
     return $ ini src Done sid
