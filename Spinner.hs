@@ -1,16 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Spinner where
 
-import           Control.Applicative        ((<$>), (<*>))
-import           Control.Monad              (liftM)
-import           Control.Monad.IO.Class     (MonadIO (..), liftIO)
-import           Data.Aeson                 (FromJSON (..), ToJSON (..), encode,
-                                             object, (.:), (.=))
-import qualified Data.Aeson.Types           as Aeson
-import qualified Data.ByteString.Lazy.Char8 as BS
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
-import qualified Data.Text.IO               as T
+import           Control.Applicative          ((<$>), (<*>))
+import           Control.Monad                (liftM)
+import           Control.Monad.IO.Class       (MonadIO (..), liftIO)
+import           Control.Monad.Trans.Resource (MonadResource (..), allocate)
+import           Data.Aeson                   (FromJSON (..), ToJSON (..),
+                                               encode, object, (.:), (.=))
+import qualified Data.Aeson.Types             as Aeson
+import qualified Data.ByteString.Lazy.Char8   as BS
+import           Data.Text                    (Text)
+import qualified Data.Text                    as T
+import qualified Data.Text.IO                 as T
 import           System.IO
 
 
@@ -50,6 +51,7 @@ fin :: SourceID -> Source m
 fin = Finishing Done
 
 data Sink m = NeedInput (Fiber -> m (Sink m))
+            | DoIO (m (Sink m))
             | Closed
 
 combine :: Monad m => Source m -> Source m -> Source m
@@ -58,6 +60,15 @@ combine (Finishing s sid) s' = Finishing (s `combine` s') sid
 combine Done s' = s'
 combine (NeedIO a) s' = NeedIO $ (`combine` s') `liftM` a
 combine (HaveOutput s fib) s' = HaveOutput (s `combine` s') fib
+
+sinkFile :: MonadResource m => FilePath -> Sink m
+sinkFile fp = DoIO $ do
+    (relKey, h) <- allocate (openFile fp WriteMode) hClose
+    return $ go relKey h
+  where
+    go relKey h = NeedInput $ \fib -> do
+        liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
+        return $ go relKey h
 
 sinkHandle :: MonadIO m => Handle -> (Sink m)
 sinkHandle h = self
@@ -94,8 +105,11 @@ spin = go []
     go stk (NeedIO a) sink = do
         src <- a
         go stk src sink
-    go stk (HaveOutput src fib) sink = case sink of
+    go stk src@(HaveOutput src' fib) sink = case sink of
         Closed -> return ()
+        DoIO a -> do
+            sink' <- a
+            go stk src sink'
         NeedInput put -> do
             sink' <- put fib
-            go stk src sink'
+            go stk src' sink'
