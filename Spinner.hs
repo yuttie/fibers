@@ -14,26 +14,10 @@ import qualified Data.Text                    as T
 import qualified Data.Text.IO                 as T
 import           System.IO
 
+import           Fiber
 
-type Key = Text
-type Value = Text
-data Fiber = Exist !Key !Value
+
 type SourceID = Text
-
-instance FromJSON Fiber where
-    parseJSON (Aeson.Object v) = do
-        typ <- v .: "type" :: Aeson.Parser Text
-        case typ of
-            "exist" -> Exist <$>
-                       v .: ("key"::Text) <*>
-                       v .: ("value"::Text)
-            _ -> fail "parseJSON: unknown type"
-    parseJSON _ = fail "parseJSON: failed to parse Fiber JSON"
-
-instance ToJSON Fiber where
-    toJSON (Exist key value) = object [ "type" .= ("exist" :: Text)
-                                      , "key" .= key
-                                      , "value" .= value ]
 
 data Source m = Init (Source m) (Source m) SourceID
               | HaveOutput (Source m) Fiber
