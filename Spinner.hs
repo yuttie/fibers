@@ -1,13 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Spinner where
 
-import           Control.Applicative          ((<$>), (<*>))
+import           Control.Applicative          ((<$>))
 import           Control.Monad                (liftM)
 import           Control.Monad.IO.Class       (MonadIO (..), liftIO)
 import           Control.Monad.Trans.Resource (MonadResource (..), allocate)
-import           Data.Aeson                   (FromJSON (..), ToJSON (..),
-                                               encode, object, (.:), (.=))
-import qualified Data.Aeson.Types             as Aeson
+import           Data.Aeson                   (ToJSON (..), encode)
 import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
@@ -85,7 +83,7 @@ spin = go []
     go (sid:stk) (Finishing s sid') sink
       | sid /= sid' = fail "failed to pop"
       | otherwise = go stk s sink
-    go stk Done _ = return ()
+    go _ Done _ = return ()
     go stk (NeedIO a) sink = do
         src <- a
         go stk src sink
