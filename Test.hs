@@ -19,8 +19,8 @@ sourceFile fp = NeedIO $ do
   where
     sid = T.pack fp
     go relKey h = NeedIO $ do
-        isEOF <- liftIO $ hIsEOF h
-        if isEOF
+        eof <- liftIO $ hIsEOF h
+        if eof
             then do
                 release relKey
                 return $ fin sid
