@@ -9,30 +9,32 @@ import           Data.Text           (Text)
 
 
 -- | Path
-newtype Path = Path Text
-
-instance FromJSON Path where
-    parseJSON (String v) = return $ Path v
-    parseJSON _ = fail "parseJSON: failed to parse a JSON into Path"
-
-instance ToJSON Path where
-    toJSON (Path t) = String t
+type Path = Text
 
 -- | Decl
-data Decl = Exist !Path !Value
+data Decl = Equal !Path !Value
+          | Include !Path !Value
 type Fiber = Decl
 
 instance FromJSON Decl where
     parseJSON (Object v) = do
         typ <- v .: "type" :: Parser Text
         case typ of
-            "exist" -> Exist
-                   <$> v .: "path"
-                   <*> v .: "value"
+            "equal" -> Equal <$> v .: "path" <*> v .: "value"
+            "include" -> Include <$> v .: "path" <*> v .: "value"
             _ -> fail "parseJSON: unknown declaration type"
     parseJSON _ = fail "parseJSON: failed to parse a JSON into Decl"
 
 instance ToJSON Decl where
-    toJSON (Exist path value) = object [ "type"  .= ("exist" :: Text)
+    toJSON (Equal path value) = object [ "type"  .= ("equal" :: Text)
                                        , "path"  .= path
                                        , "value" .= value ]
+    toJSON (Include path value) = object [ "type"  .= ("include" :: Text)
+                                         , "path"  .= path
+                                         , "value" .= value ]
+
+equal :: ToJSON a => Path -> a -> Decl
+equal path value = Equal path $ toJSON value
+
+include :: ToJSON a => Path -> a -> Decl
+include path value = Include path $ toJSON value

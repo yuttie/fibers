@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import           Control.Applicative          ((<$>))
 import           Control.Monad.IO.Class       (liftIO)
 import           Control.Monad.Trans.Resource (MonadResource (..), allocate,
                                                release, runResourceT)
@@ -9,6 +8,7 @@ import qualified Data.Text                    as T
 import qualified Data.Text.IO                 as T
 import           System.IO
 
+import           Fiber
 import           Spinner
 
 
@@ -26,7 +26,7 @@ sourceFile fp = NeedIO $ do
                 return $ fin sid
             else do
                 l <- liftIO $ T.hGetLine h
-                return $ HaveOutput (go relKey h) (Exist l "1")
+                return $ HaveOutput (go relKey h) (Equal l "1")
 
 main :: IO ()
 main = do
