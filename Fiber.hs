@@ -11,21 +11,20 @@ import           Data.Text           (Text)
 -- | Path
 type Path = Text
 
--- | Decl
-data Decl = Equal !Path !Value
-          | Include !Path !Value
-type Fiber = Decl
+-- | Fiber
+data Fiber = Equal !Path !Value
+           | Include !Path !Value
 
-instance FromJSON Decl where
+instance FromJSON Fiber where
     parseJSON (Object v) = do
         typ <- v .: "type" :: Parser Text
         case typ of
             "equal" -> Equal <$> v .: "path" <*> v .: "value"
             "include" -> Include <$> v .: "path" <*> v .: "value"
             _ -> fail "parseJSON: unknown declaration type"
-    parseJSON _ = fail "parseJSON: failed to parse a JSON into Decl"
+    parseJSON _ = fail "parseJSON: failed to parse a JSON into Fiber"
 
-instance ToJSON Decl where
+instance ToJSON Fiber where
     toJSON (Equal path value) = object [ "type"  .= ("equal" :: Text)
                                        , "path"  .= path
                                        , "value" .= value ]
@@ -33,8 +32,8 @@ instance ToJSON Decl where
                                          , "path"  .= path
                                          , "value" .= value ]
 
-equal :: ToJSON a => Path -> a -> Decl
-equal path value = Equal path $ toJSON value
+equal :: ToJSON a => Path -> a -> Fiber
+equal path value = Equal path (toJSON value)
 
-include :: ToJSON a => Path -> a -> Decl
-include path value = Include path $ toJSON value
+include :: ToJSON a => Path -> a -> Fiber
+include path value = Include path (toJSON value)
