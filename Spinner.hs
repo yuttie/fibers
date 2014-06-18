@@ -17,29 +17,31 @@ import           Fiber
 
 type SourceID = Text
 
-data Source m = Init (Source m) (Source m) SourceID
-              | HaveOutput (Source m) Fiber
-              | NeedIO (m (Source m))
-              | Finishing (Source m) SourceID
-              | Done
+data Source m a = Init (Source m a) (Source m a) SourceID
+                | HaveOutput (Source m a) Fiber
+                | NeedIO (m (Source m a))
+                | Finishing (Source m a) SourceID
+                | Done a
 
-session :: Monad m => SourceID -> Source m -> Source m
-session sid src = Init src Done sid `combine` Finishing Done sid
+instance Monad m => Monad (Source m) where
+    return = Done
 
-ini :: Source m -> Source m -> SourceID -> Source m
+    Init src1 src2 sid >>= f = Init (src1 >>= f) (src2 >>= f) sid
+    HaveOutput src fib >>= f = HaveOutput (src >>= f) fib
+    NeedIO msrc        >>= f = NeedIO ((>>= f) `liftM` msrc)
+    Finishing src sid  >>= f = Finishing (src >>= f) sid
+    Done x             >>= f = f x
+
+session :: Monad m => SourceID -> Source m () -> Source m ()
+session sid src = Init src (Done ()) sid >> Finishing (Done ()) sid
+
+ini :: Source m a -> Source m a -> SourceID -> Source m a
 ini = Init
 
-fin :: SourceID -> Source m
-fin = Finishing Done
+fin :: SourceID -> Source m ()
+fin = Finishing (Done ())
 
-combine :: Monad m => Source m -> Source m -> Source m
-combine (Init s1 s2 sid) s' = Init (s1 `combine` s') (s2 `combine` s') sid
-combine (Finishing s sid) s' = Finishing (s `combine` s') sid
-combine Done s' = s'
-combine (NeedIO a) s' = NeedIO $ (`combine` s') `liftM` a
-combine (HaveOutput s fib) s' = HaveOutput (s `combine` s') fib
-
-dedup :: MonadIO m => Source m -> Source m
+dedup :: MonadIO m => Source m a -> Source m a
 dedup = go
   where
     go (Init s1 s2 sid) = NeedIO $ do
@@ -53,7 +55,7 @@ dedup = go
         liftIO $ withFile "known_sources.list" AppendMode $ \h ->
             T.hPutStrLn h sid
         return $ Finishing (go src) sid
-    go Done = Done
+    go src@(Done _) = src
 
 data Sink m = NeedInput (Fiber -> m (Sink m))
             | DoIO (m (Sink m))
@@ -75,7 +77,7 @@ sinkHandle h = self
         liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
         return self
 
-spin :: Monad m => Source m -> (Sink m) -> m ()
+spin :: Monad m => Source m a -> (Sink m) -> m ()
 spin = go []
   where
     go stk (Init s _ sid) sink = go (sid : stk) s sink
@@ -83,7 +85,7 @@ spin = go []
     go (sid:stk) (Finishing s sid') sink
       | sid /= sid' = fail "failed to pop"
       | otherwise = go stk s sink
-    go _ Done _ = return ()
+    go _ (Done _) _ = return ()
     go stk (NeedIO a) sink = do
         src <- a
         go stk src sink

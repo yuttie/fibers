@@ -12,10 +12,10 @@ import           Fiber
 import           Spinner
 
 
-sourceFile :: MonadResource m => FilePath -> Source m
+sourceFile :: MonadResource m => FilePath -> Source m ()
 sourceFile fp = NeedIO $ do
     (relKey, h) <- allocate (openFile fp ReadMode) hClose
-    return $ ini (go relKey h) Done sid
+    return $ ini (go relKey h) (Done ()) sid
   where
     sid = T.pack fp
     go relKey h = NeedIO $ do
@@ -35,8 +35,8 @@ main = do
     let src3 = sourceFile "test3.dat"
     let src4 = sourceFile "test4.dat"
     let src5 = sourceFile "test5.dat"
-    let srcs1 = dedup $ src1 `combine` src1 `combine` src2 `combine` src3 `combine` src2
-    let srcs2 = dedup $ src1 `combine` src4 `combine` src4 `combine` src3 `combine` src5
+    let srcs1 = dedup $ src1 >> src1 >> src2 >> src3 >> src2
+    let srcs2 = dedup $ src1 >> src4 >> src4 >> src3 >> src5
     let sink1 = sinkHandle stdout
     let sink2 = sinkFile "test.db"
     runResourceT $ spin srcs1 sink1
