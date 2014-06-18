@@ -1,4 +1,4 @@
-name:                spinner
+name:                fibers
 version:             0.1.0.0
 license:             BSD3
 license-file:        LICENSE
@@ -10,8 +10,8 @@ cabal-version:       >=1.10
 
 
 library
-  exposed-modules:     Spin
-                     , Fiber
+  exposed-modules:     Fiber
+                     , Spin
   build-depends:       base         >=4.7  && <4.8
                      , aeson        >=0.7  && <0.8
                      , bytestring   >=0.10 && <0.11
