@@ -9,7 +9,7 @@ import qualified Data.Text.IO                 as T
 import           System.IO
 
 import           Fiber
-import           Spinner
+import           Spin
 
 
 sourceFile :: MonadResource m => FilePath -> Source m ()

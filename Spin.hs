@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Spinner where
+module Spin where
 
 import           Control.Applicative          (Applicative (..), (<$>))
 import           Control.Monad                (ap, liftM)
