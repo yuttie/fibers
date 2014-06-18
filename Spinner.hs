@@ -70,14 +70,14 @@ sinkFile fp = DoIO $ do
         liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
         return $ go relKey h
 
-sinkHandle :: MonadIO m => Handle -> (Sink m)
+sinkHandle :: MonadIO m => Handle -> Sink m
 sinkHandle h = self
   where
     self = NeedInput $ \fib -> do
         liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
         return self
 
-spin :: Monad m => Source m a -> (Sink m) -> m ()
+spin :: Monad m => Source m a -> Sink m -> m ()
 spin = go []
   where
     go stk (Init s _ sid) sink = go (sid : stk) s sink
