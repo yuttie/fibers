@@ -42,12 +42,6 @@ instance Monad m => Monad (Source m) where
 session :: Monad m => SourceID -> Source m () -> Source m ()
 session sid src = Init src (Done ()) sid >> Finishing (Done ()) sid
 
-ini :: Source m a -> Source m a -> SourceID -> Source m a
-ini = Init
-
-fin :: SourceID -> Source m ()
-fin = Finishing (Done ())
-
 dedup :: MonadIO m => Source m a -> Source m a
 dedup = go
   where

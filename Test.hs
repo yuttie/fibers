@@ -15,7 +15,7 @@ import           Spinner
 sourceFile :: MonadResource m => FilePath -> Source m ()
 sourceFile fp = NeedIO $ do
     (relKey, h) <- allocate (openFile fp ReadMode) hClose
-    return $ ini (go relKey h) (Done ()) sid
+    return $ Init (go relKey h) (Done ()) sid
   where
     sid = T.pack fp
     go relKey h = NeedIO $ do
@@ -23,7 +23,7 @@ sourceFile fp = NeedIO $ do
         if eof
             then do
                 release relKey
-                return $ fin sid
+                return $ Finishing (Done ()) sid
             else do
                 l <- liftIO $ T.hGetLine h
                 return $ HaveOutput (go relKey h) (Equal l "1")
