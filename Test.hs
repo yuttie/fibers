@@ -38,7 +38,7 @@ main = do
     let srcs1 = dedup $ src1 >> src1 >> src2 >> src3 >> src2
     let srcs2 = dedup $ src1 >> src4 >> src4 >> src3 >> src5
     let sink1 = sinkHandle stdout
-    let sink2 = sinkFile "test.db"
+    let sink2 = sinkFile "test.yarn"
     runResourceT $ spin srcs1 sink1
     runResourceT $ spin srcs2 sink2
     yield (equal "spinner.test.x" (1::Int)) `spin` sinkHandle stdout
