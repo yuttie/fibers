@@ -41,3 +41,4 @@ main = do
     let sink2 = sinkFile "test.db"
     runResourceT $ spin srcs1 sink1
     runResourceT $ spin srcs2 sink2
+    yield (equal "spinner.test.x" (1::Int)) `spin` sinkHandle stdout
