@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Spinner where
 
-import           Control.Applicative          ((<$>))
-import           Control.Monad                (liftM)
+import           Control.Applicative          (Applicative (..), (<$>))
+import           Control.Monad                (ap, liftM)
 import           Control.Monad.IO.Class       (MonadIO (..), liftIO)
 import           Control.Monad.Trans.Resource (MonadResource (..), allocate)
 import           Data.Aeson                   (ToJSON (..), encode)
@@ -22,6 +22,13 @@ data Source m a = Init (Source m a) (Source m a) SourceID
                 | NeedIO (m (Source m a))
                 | Finishing (Source m a) SourceID
                 | Done a
+
+instance Monad m => Functor (Source m) where
+    fmap = liftM
+
+instance Monad m => Applicative (Source m) where
+    pure = return
+    (<*>) = ap
 
 instance Monad m => Monad (Source m) where
     return = Done
