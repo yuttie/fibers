@@ -32,32 +32,12 @@ ini = Init
 fin :: SourceID -> Source m
 fin = Finishing Done
 
-data Sink m = NeedInput (Fiber -> m (Sink m))
-            | DoIO (m (Sink m))
-            | Closed
-
 combine :: Monad m => Source m -> Source m -> Source m
 combine (Init s1 s2 sid) s' = Init (s1 `combine` s') (s2 `combine` s') sid
 combine (Finishing s sid) s' = Finishing (s `combine` s') sid
 combine Done s' = s'
 combine (NeedIO a) s' = NeedIO $ (`combine` s') `liftM` a
 combine (HaveOutput s fib) s' = HaveOutput (s `combine` s') fib
-
-sinkFile :: MonadResource m => FilePath -> Sink m
-sinkFile fp = DoIO $ do
-    (relKey, h) <- allocate (openFile fp WriteMode) hClose
-    return $ go relKey h
-  where
-    go relKey h = NeedInput $ \fib -> do
-        liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
-        return $ go relKey h
-
-sinkHandle :: MonadIO m => Handle -> (Sink m)
-sinkHandle h = self
-  where
-    self = NeedInput $ \fib -> do
-        liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
-        return self
 
 dedup :: MonadIO m => Source m -> Source m
 dedup = go
@@ -74,6 +54,26 @@ dedup = go
             T.hPutStrLn h sid
         return $ Finishing (go src) sid
     go Done = Done
+
+data Sink m = NeedInput (Fiber -> m (Sink m))
+            | DoIO (m (Sink m))
+            | Closed
+
+sinkFile :: MonadResource m => FilePath -> Sink m
+sinkFile fp = DoIO $ do
+    (relKey, h) <- allocate (openFile fp WriteMode) hClose
+    return $ go relKey h
+  where
+    go relKey h = NeedInput $ \fib -> do
+        liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
+        return $ go relKey h
+
+sinkHandle :: MonadIO m => Handle -> (Sink m)
+sinkHandle h = self
+  where
+    self = NeedInput $ \fib -> do
+        liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
+        return self
 
 spin :: Monad m => Source m -> (Sink m) -> m ()
 spin = go []
