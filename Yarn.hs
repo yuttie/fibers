@@ -4,6 +4,7 @@ module Yarn where
 import           Control.Applicative
 import           Control.Exception
 import qualified Data.Aeson                 as Aeson
+import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified System.IO                  as IO
 
@@ -37,23 +38,23 @@ foldl f z y = do
         if eof
             then finish front x
             else do
-                buf <- LBS.hGet h 4096
+                buf <- BS.hGet h 4096
                 go front buf x
     go front more x = do  -- 'more' is always the beginning of a line
-        let (first, second) = LBS.break (== '\n') more
-        case LBS.uncons second of
-            Nothing -> loop (LBS.append $ front more) x
+        let (first, second) = BS.break (== '\n') more
+        case BS.uncons second of
+            Nothing -> loop (BS.append $ front more) x
             Just (_, second') -> do
                 let l = front first
-                if LBS.null l
+                if BS.null l
                     then fail "Yarn.foldl: an empty line"
                     else do
                         let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode l
                         let x' = f x fib
                         go id second' x'
     finish front x = do
-        let l = front LBS.empty
-        if LBS.null l
+        let l = front BS.empty
+        if BS.null l
             then return x
             else do
                 let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode l
@@ -71,23 +72,23 @@ foldl' f z y = do
         if eof
             then finish front x
             else do
-                buf <- LBS.hGet h 4096
+                buf <- BS.hGet h 4096
                 go front buf x
     go front more x = do  -- 'more' is always the beginning of a line
-        let (first, second) = LBS.break (== '\n') more
-        case LBS.uncons second of
-            Nothing -> loop (LBS.append $ front more) x
+        let (first, second) = BS.break (== '\n') more
+        case BS.uncons second of
+            Nothing -> loop (BS.append $ front more) x
             Just (_, second') -> do
                 let l = front first
-                if LBS.null l
+                if BS.null l
                     then fail "Yarn.foldl: an empty line"
                     else do
                         let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode l
                         let !x' = f x fib
                         go id second' x'
     finish front x = do
-        let l = front LBS.empty
-        if LBS.null l
+        let l = front BS.empty
+        if BS.null l
             then return x
             else do
                 let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode l
