@@ -49,7 +49,7 @@ foldl f z y = do
                 if BS.null l
                     then fail "Yarn.foldl: an empty line"
                     else do
-                        let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode l
+                        let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode $ LBS.fromStrict l
                         let x' = f x fib
                         go id second' x'
     finish front x = do
@@ -57,7 +57,7 @@ foldl f z y = do
         if BS.null l
             then return x
             else do
-                let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode l
+                let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode $ LBS.fromStrict l
                 let x' = f x fib
                 return x'
     !h = unYarn y
@@ -83,7 +83,7 @@ foldl' f z y = do
                 if BS.null l
                     then fail "Yarn.foldl: an empty line"
                     else do
-                        let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode l
+                        let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode $ LBS.fromStrict l
                         let !x' = f x fib
                         go id second' x'
     finish front x = do
@@ -91,7 +91,7 @@ foldl' f z y = do
         if BS.null l
             then return x
             else do
-                let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode l
+                let fib = either (error . ("Yarn.foldl: " ++)) id $ Aeson.eitherDecode $ LBS.fromStrict l
                 let !x' = f x fib
                 return x'
     !h = unYarn y
