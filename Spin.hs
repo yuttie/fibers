@@ -6,13 +6,13 @@ import           Control.Monad                (ap, liftM)
 import           Control.Monad.IO.Class       (MonadIO (..), liftIO)
 import           Control.Monad.Trans.Resource (MonadResource (..), allocate)
 import           Data.Aeson                   (ToJSON (..), encode)
-import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.IO                 as T
 import           System.IO
 
 import           Fiber
+import qualified Yarn                         as Yarn
 
 
 type SourceID = Text
@@ -67,18 +67,18 @@ data Sink m = NeedInput (Fiber -> m (Sink m))
 
 sinkFile :: MonadResource m => FilePath -> Sink m
 sinkFile fp = DoIO $ do
-    (relKey, h) <- allocate (openFile fp WriteMode) hClose
-    return $ go relKey h
+    (relKey, y) <- allocate (Yarn.openFile fp Yarn.ReadWriteMode) Yarn.close
+    return $ go relKey y
   where
-    go relKey h = NeedInput $ \fib -> do
-        liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
-        return $ go relKey h
+    go relKey y = NeedInput $ \fib -> do
+        liftIO $ Yarn.insert fib y
+        return $ go relKey y
 
-sinkHandle :: MonadIO m => Handle -> Sink m
-sinkHandle h = self
+sinkHandle :: MonadIO m => Yarn.Yarn -> Sink m
+sinkHandle y = self
   where
     self = NeedInput $ \fib -> do
-        liftIO $ BS.hPutStrLn h $ encode $ toJSON fib
+        liftIO $ Yarn.insert fib y
         return self
 
 spin :: Monad m => Source m a -> Sink m -> m ()
