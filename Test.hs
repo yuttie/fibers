@@ -10,6 +10,7 @@ import           System.IO
 
 import           Fiber
 import           Spin
+import           Weave
 
 
 sourceFile :: MonadResource m => FilePath -> Source m ()
