@@ -6,14 +6,13 @@ import           Control.Monad                (ap, liftM)
 import           Control.Monad.IO.Class       (MonadIO (..), liftIO)
 import           Control.Monad.Trans.Class    (MonadTrans(..))
 import           Control.Monad.Trans.Resource (MonadResource (..), allocate)
-import           Data.Aeson                   (ToJSON (..), encode)
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.IO                 as T
 import           System.IO
 
 import           Fiber
-import qualified Yarn                         as Yarn
+import qualified Yarn
 
 
 type SourceID = Text
