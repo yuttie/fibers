@@ -4,6 +4,7 @@ module Spin where
 import           Control.Applicative          (Applicative (..), (<$>))
 import           Control.Monad                (ap, liftM)
 import           Control.Monad.IO.Class       (MonadIO (..), liftIO)
+import           Control.Monad.Trans.Class    (MonadTrans(..))
 import           Control.Monad.Trans.Resource (MonadResource (..), allocate)
 import           Data.Aeson                   (ToJSON (..), encode)
 import           Data.Text                    (Text)
@@ -38,6 +39,12 @@ instance Monad m => Monad (Source m) where
     NeedIO msrc        >>= f = NeedIO ((>>= f) `liftM` msrc)
     Finishing src sid  >>= f = Finishing (src >>= f) sid
     Done x             >>= f = f x
+
+instance MonadTrans Source where
+    lift = NeedIO . (Done `liftM`)
+
+instance MonadIO m => MonadIO (Source m) where
+    liftIO = lift . liftIO
 
 session :: Monad m => SourceID -> Source m () -> Source m ()
 session sid src = Init src (Done ()) sid >> Finishing (Done ()) sid
