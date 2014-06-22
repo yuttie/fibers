@@ -82,23 +82,22 @@ applyToJSON :: Fiber -> Value -> Value
 applyToJSON (Equal path value) = go props value
   where
     props = either error id $ A.parseOnly (pathComponents <* A.endOfInput) path
-    go (p:[]) v (Object o) = Object $ HashMap.insert p v o
-    go (p:[]) v _ = object [p .= v]
+    go [] v _ = v
     go (p:ps) v (Object o) = Object $ HashMap.insert p child' o
       where
-        child = HashMap.lookupDefault (object []) p o
+        child = HashMap.lookupDefault Null p o
         child' = go ps v child
-    go ps v _ = go ps v (object [])
+    go ps@(_:_) v _ = go ps v (object [])
 applyToJSON (Include path value) = go props value
   where
     props = either error id $ A.parseOnly (pathComponents <* A.endOfInput) path
-    go (p:[]) v (Array a) = Array $ V.snoc a v
-    go (p:[]) v _ = Array $ V.singleton v
+    go [] v (Array a) = Array $ V.snoc a v
+    go [] v _ = Array $ V.singleton v
     go (p:ps) v (Object o) = Object $ HashMap.insert p child' o
       where
-        child = HashMap.lookupDefault (object []) p o
+        child = HashMap.lookupDefault Null p o
         child' = go ps v child
-    go ps v _ = go ps v (object [])
+    go ps@(_:_) v _ = go ps v (object [])
 
 -- applyToJSON (Include path value) = foldr (\prop v -> object [prop .= v]) value props
 --   where
