@@ -77,7 +77,9 @@ pathComponents = do
     ps <- A.many' (property <|> index)
     return $ p : ps
 
--- aaa
+-- | Incremental construction of JSON value.
+-- applyToJSON (include "abc[\"def\"].ghi" 2) $ applyToJSON (include "abc[\"def\"].ghi" 1) (object [])
+-- => Object fromList [("abc",Object fromList [("def",Object fromList [("ghi",Array (fromList [Number 1.0,Number 2.0]))])])]
 applyToJSON :: Fiber -> Value -> Value
 applyToJSON (Equal path value) = go props value
   where
