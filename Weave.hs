@@ -4,6 +4,7 @@ module Weave where
 
 import           Data.Text                    (Text)
 import           Data.Char
+import           Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.HashMap.Strict as HashMap
@@ -51,14 +52,16 @@ property = A.char '.' *> identifier
 jstring :: A.Parser Text
 jstring = do
     _ <- A.char '"'
-    s <- A.scan False $ \s c ->
-        if s then Just False
+    str <- A.scan False $ \s c ->
+        if s
+            then Just False
             else if c == '"'
                 then Nothing
                 else Just (c == '\\')
     _ <- A.char '"'
-    let s' = either error id $ ABS.parseOnly Aeson.jstring $ T.encodeUtf8 s
-    return s'
+    let qstr = T.singleton '"' <> str <> T.singleton '"'
+    let str' = either error id $ ABS.parseOnly Aeson.jstring $ T.encodeUtf8 qstr
+    return $! str'
 
 index :: A.Parser Text
 index = A.char '[' *> jstring <* A.char ']'
