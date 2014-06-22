@@ -14,6 +14,7 @@ import           Data.Monoid
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as T
+import qualified Data.Vector                as V
 
 import           Fiber
 
@@ -83,6 +84,16 @@ applyToJSON (Equal path value) = go props value
     props = either error id $ A.parseOnly (pathComponents <* A.endOfInput) path
     go (p:[]) v (Object o) = Object $ HashMap.insert p v o
     go (p:[]) v _ = object [p .= v]
+    go (p:ps) v (Object o) = Object $ HashMap.insert p child' o
+      where
+        child = HashMap.lookupDefault (object []) p o
+        child' = go ps v child
+    go ps v _ = go ps v (object [])
+applyToJSON (Include path value) = go props value
+  where
+    props = either error id $ A.parseOnly (pathComponents <* A.endOfInput) path
+    go (p:[]) v (Array a) = Array $ V.snoc a v
+    go (p:[]) v _ = Array $ V.singleton v
     go (p:ps) v (Object o) = Object $ HashMap.insert p child' o
       where
         child = HashMap.lookupDefault (object []) p o
