@@ -1,21 +1,21 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Weave where
 
-import           Data.Text                    (Text)
-import           Data.Char
-import           Data.Monoid
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
-import qualified Data.HashMap.Strict as HashMap
-import           Data.Aeson ((.=), Value(..), object)
-import qualified Data.Aeson.Parser as Aeson
-import qualified Data.ByteString as BS
 import           Control.Applicative
-import qualified Data.Attoparsec.Text as A
+import           Data.Aeson                 (Value (..), object, (.=))
+import qualified Data.Aeson.Parser          as Aeson
 import qualified Data.Attoparsec.ByteString as ABS
+import qualified Data.Attoparsec.Text       as A
+import qualified Data.ByteString            as BS
+import           Data.Char
+import qualified Data.HashMap.Strict        as HashMap
+import           Data.Monoid
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as T
 
-import Fiber
+import           Fiber
 
 
 -- constructor
