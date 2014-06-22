@@ -3,11 +3,10 @@
 module Weave where
 
 import           Control.Applicative
-import           Data.Aeson                 (Value (..), object, (.=))
+import           Data.Aeson                 (Value (..), object)
 import qualified Data.Aeson.Parser          as Aeson
 import qualified Data.Attoparsec.ByteString as ABS
 import qualified Data.Attoparsec.Text       as A
-import qualified Data.ByteString            as BS
 import           Data.Char
 import qualified Data.HashMap.Strict        as HashMap
 import           Data.Monoid
@@ -18,13 +17,6 @@ import qualified Data.Vector                as V
 
 import           Fiber
 
-
--- constructor
--- can be used with Yarn.foldl
-data Weaver a = Weaver (a -> a)
-
-data Direction = AssignProp Text Value Direction
-               | AppendElement Value
 
 -- Parsers
 identifier :: A.Parser Text
@@ -66,10 +58,6 @@ jstring = do
 
 index :: A.Parser Text
 index = A.char '[' *> jstring <* A.char ']'
-    -- A.char '['
-    -- s <- jstring
-    -- A.char ']'
-    -- return s
 
 pathComponents :: A.Parser [Text]
 pathComponents = do
@@ -100,19 +88,3 @@ applyToJSON (Include path value) = go props value
         child = HashMap.lookupDefault Null p o
         child' = go ps v child
     go ps@(_:_) v _ = go ps v (object [])
-
--- applyToJSON (Include path value) = foldr (\prop v -> object [prop .= v]) value props
---   where
---     Right props = A.parseOnly (pathComponents <* A.endOfInput) path
-
--- director :: A.Parser Director
--- director = do
---     root Root <$> topLevel
---     property <|> index
-
--- jsonWeaver :: Fiber -> Weaver Value
--- jsonWeaver fib = Weaber $ \v ->
---   where
---     path = case fib of
---         Equal path _ -> path
---         Include path _ -> path
