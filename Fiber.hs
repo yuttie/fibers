@@ -14,6 +14,7 @@ type Path = Text
 -- | Fiber
 data Fiber = Equal !Path !Value
            | Include !Path !Value
+           deriving (Eq, Show)
 
 instance FromJSON Fiber where
     parseJSON (Object v) = do
