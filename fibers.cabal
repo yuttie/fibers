@@ -34,5 +34,6 @@ executable weaveJSON
                      , aeson                >=0.7  && <0.8
                      , bytestring           >=0.10 && <0.11
                      , fibers
+                     , optparse-applicative >=0.9  && <0.10
   default-language:    Haskell2010
   ghc-options:         -O2 -Wall
