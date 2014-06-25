@@ -80,8 +80,8 @@ sinkFile fp = DoIO $ do
         liftIO $ Yarn.insert fib y
         return $ go relKey y
 
-sinkHandle :: MonadIO m => Yarn.Yarn -> Sink m
-sinkHandle y = self
+sinkYarn :: MonadIO m => Yarn.Yarn -> Sink m
+sinkYarn y = self
   where
     self = NeedInput $ \fib -> do
         liftIO $ Yarn.insert fib y
