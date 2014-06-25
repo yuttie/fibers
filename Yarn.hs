@@ -3,6 +3,7 @@ module Yarn where
 
 import           Control.Applicative
 import           Control.Exception
+import           Control.Monad
 import qualified Data.Aeson                 as Aeson
 import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -14,6 +15,12 @@ import           Fiber
 newtype Yarn = Yarn { unYarn :: IO.Handle }
 
 data IOMode = ReadMode | ReadWriteMode
+
+stdin :: Yarn
+stdin = Yarn IO.stdin
+
+stdout :: Yarn
+stdout = Yarn IO.stdout
 
 withFile :: FilePath -> IOMode -> (Yarn -> IO a) -> IO a
 withFile fp mode = bracket (openFile fp mode) close
@@ -30,7 +37,9 @@ close = IO.hClose . unYarn
 
 foldl :: (a -> Fiber -> a) -> a -> Yarn -> IO a
 foldl f z y = do
-    IO.hSeek h IO.AbsoluteSeek 0
+    seekable <- IO.hIsSeekable $ unYarn y
+    when seekable $
+        IO.hSeek h IO.AbsoluteSeek 0
     loop id z
   where
     loop front x = do  -- more bytes are needed
@@ -64,7 +73,9 @@ foldl f z y = do
 
 foldl' :: (a -> Fiber -> a) -> a -> Yarn -> IO a
 foldl' f z y = do
-    IO.hSeek h IO.AbsoluteSeek 0
+    seekable <- IO.hIsSeekable $ unYarn y
+    when seekable $
+        IO.hSeek h IO.AbsoluteSeek 0
     loop id z
   where
     loop front x = do  -- more bytes are needed
@@ -98,7 +109,9 @@ foldl' f z y = do
 
 insert :: Fiber -> Yarn -> IO ()
 insert fib y = do
-    IO.hSeek h IO.SeekFromEnd 0
+    seekable <- IO.hIsSeekable $ unYarn y
+    when seekable $
+        IO.hSeek h IO.SeekFromEnd 0
     LBS.hPutStrLn h $ Aeson.encode fib
   where
     !h = unYarn y
