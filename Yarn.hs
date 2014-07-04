@@ -1,5 +1,16 @@
 {-# LANGUAGE BangPatterns #-}
-module Yarn where
+module Yarn
+    ( Yarn (..)
+    , IOMode (..)
+    , stdin
+    , stdout
+    , withFile
+    , openFile
+    , close
+    , foldl
+    , foldl'
+    , insert
+    ) where
 
 import           Control.Applicative
 import           Control.Exception
@@ -7,6 +18,7 @@ import           Control.Monad
 import qualified Data.Aeson                 as Aeson
 import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
+import           Prelude                    hiding (foldl)
 import qualified System.IO                  as IO
 
 import           Fiber

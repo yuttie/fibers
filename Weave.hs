@@ -1,6 +1,8 @@
 {-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Weave where
+module Weave
+    ( applyToJSON
+    ) where
 
 import           Control.Applicative
 import           Data.Aeson                 (Value (..), object)

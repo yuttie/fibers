@@ -1,5 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Fiber where
+module Fiber
+    ( Path
+    , Fiber (..)
+    , equal
+    , include
+    ) where
 
 import           Control.Applicative ((<$>), (<*>))
 import           Data.Aeson          (FromJSON (..), ToJSON (..), Value (..),

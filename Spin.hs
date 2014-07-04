@@ -1,10 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Spin where
+module Spin
+    ( SourceID
+    , Source (..)
+    , session
+    , yield
+    , dedup
+    , Sink (..)
+    , sinkFile
+    , sinkYarn
+    , spin
+    ) where
 
 import           Control.Applicative          (Applicative (..), (<$>))
 import           Control.Monad                (ap, liftM)
 import           Control.Monad.IO.Class       (MonadIO (..), liftIO)
-import           Control.Monad.Trans.Class    (MonadTrans(..))
+import           Control.Monad.Trans.Class    (MonadTrans (..))
 import           Control.Monad.Trans.Resource (MonadResource (..), allocate)
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
