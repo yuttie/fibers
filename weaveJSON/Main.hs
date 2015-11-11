@@ -21,18 +21,18 @@ cmdline = CommandLine
     <$> optOutputFp
     <*> argInputFp
   where
-    optOutputFp = fmap join $ optional $ nullOption
+    optOutputFp = fmap join $ optional $ option parseFilePath
                 ( long "output"
                <> short 'o'
                <> metavar "FILE"
-               <> reader parseFilePath
                 )
     argInputFp = fmap join $ optional $ argument parseFilePath
                ( metavar "FILE" )
 
-parseFilePath :: Monad m => String -> m (Maybe FilePath)
-parseFilePath "-" = return Nothing
-parseFilePath s = return $! Just s
+parseFilePath :: ReadM (Maybe FilePath)
+parseFilePath = eitherReader $ \s -> Right $ case s of
+    "-" -> Nothing
+    _   -> Just s
 
 main :: IO ()
 main = do

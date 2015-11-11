@@ -6,7 +6,6 @@ module Fiber
     , include
     ) where
 
-import           Control.Applicative ((<$>), (<*>))
 import           Data.Aeson          (FromJSON (..), ToJSON (..), Value (..),
                                       object, (.:), (.=))
 import           Data.Aeson.Types    (Parser)
